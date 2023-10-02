@@ -7,13 +7,15 @@ import {
 	Modal,
 	TextField,
 	Typography,
-	Alert, AlertTitle, styled
-} from "@mui/material";
-import * as React from "react";
-import axios from "axios";
-import localforage from "localforage";
-import { useState } from "react";
-import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+	Alert,
+	AlertTitle,
+	styled
+} from '@mui/material'
+import * as React from 'react'
+import axios from 'axios'
+import localforage from 'localforage'
+import { useState } from 'react'
+import CloudUploadIcon from '@mui/icons-material/CloudUpload'
 
 const style = {
 	position: 'absolute',
@@ -27,8 +29,8 @@ const style = {
 	p: 4,
 	display: 'flex',
 	flexDirection: 'column',
-	alignItems: 'center',
-};
+	alignItems: 'center'
+}
 
 const VisuallyHiddenInput = styled('input')({
 	clip: 'rect(0 0 0 0)',
@@ -39,212 +41,227 @@ const VisuallyHiddenInput = styled('input')({
 	bottom: 0,
 	left: 0,
 	whiteSpace: 'nowrap',
-	width: 1,
-});
+	width: 1
+})
 
 interface FormData {
-	id_empresa?: number;
-	nome: string;
-	cnpj: string;
-	email: string;
-	telefone: string;
+	id_empresa?: number
+	nome: string
+	cnpj: string
+	email: string
+	telefone: string
+	logo?: File | string
 }
 
 interface Token {
-	access_token: string;
+	access_token: string
 }
 
 interface ModalCadastrarProps {
-	onClose?: () => void;
-	data?: FormData;
-	icon?: React.ReactNode;
-	button?: string;
+	onClose?: () => void
+	data?: FormData
+	icon?: React.ReactNode
+	button?: string
 }
 
 const StyledFade = styled(Fade)({
-	display: 'flex',
-});
+	display: 'flex'
+})
 
+const ModalCadastrar: React.FC<ModalCadastrarProps> = props => {
+	const { onClose, data } = props
 
-const ModalCadastrar: React.FC<ModalCadastrarProps> = (props) => {
+	const [loading, setLoading] = useState(false)
+	const [open, setOpen] = useState(false)
 
-	const { onClose, data } = props;
-
-	const [loading, setLoading] = useState(false);
-	const [open, setOpen] = useState(false);
-
-	const [formData, setFormData] = useState<FormData>(data || {
-		id_empresa: undefined,
-		nome: '',
-		cnpj: '',
-		email: '',
-		telefone: ''
-	});
-	const [image, setImage] = useState<File | null>(null);
+	const [formData, setFormData] = useState<FormData>(() => {
+		if (props.data) {
+			return props.data
+		} else {
+			return {
+				id_empresa: undefined,
+				nome: '',
+				cnpj: '',
+				email: '',
+				telefone: ''
+			}
+		}
+	})
+	const [image, setImage] = useState<File | null>(null)
 	const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
 		if (event.target.files && event.target.files[0]) {
-			setImage(event.target.files[0]);
+			setImage(event.target.files[0])
 		}
-	};
+	}
 
-	const [errors, setErrors] = useState<string[]>([]);
-	const [success, setSuccess] = useState(false);
+	const [errors, setErrors] = useState<string[]>([])
+	const [success, setSuccess] = useState(false)
 
 	const TYPES: { [key: string]: string } = {
-		cnpj: "99.999.999/9999-99",
-		telefone: "(99) 99999-9999",
+		cnpj: '99.999.999/9999-99',
+		telefone: '(99) 99999-9999'
 	}
 
 	function applyMask(value: string, name: string) {
-		if (TYPES[name] === undefined) return value;
-		value = (value as string).replace(/[^0-9]/g, "");
-		const mask = TYPES[name];
-		let result = "";
+		if (TYPES[name] === undefined) return value
+		value = (value as string).replace(/[^0-9]/g, '')
+		const mask = TYPES[name]
+		let result = ''
 
-		let inc = 0;
+		let inc = 0
 		Array.from(value).forEach((letter, index) => {
 			while (
 				mask[index + inc] !== undefined &&
 				mask[index + inc].match(/[0-9]/) === null
 			) {
-				result += mask[index + inc];
-				inc++;
+				result += mask[index + inc]
+				inc++
 			}
-			result += letter;
-		});
-		return result;
+			result += letter
+		})
+		return result
 	}
 
-	const handleChange = (event: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>, length: number | null = null): void => {
+	const handleChange = (
+		event: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>,
+		length: number | null = null
+	): void => {
+		if (length !== null && event.target.value.length > length) return
 
-		if (length !== null && event.target.value.length > length)
-			return;
+		event.target.value = applyMask(event.target.value, event.target.name)
 
-		event.target.value = applyMask(event.target.value, event.target.name);
-
-		const { name, value } = event.target;
+		const { name, value } = event.target
 		setFormData({
 			...formData,
 			[name]: value
-		});
-	};
-
-	const validateData = (): boolean => {
-		let errorsAux: string[] = [];
-		if (formData.nome === '')
-			errorsAux.push('O campo nome é obrigatório');
-
-		if (formData.cnpj === '')
-			errorsAux.push('O campo CNPJ é obrigatório');
-		else if (formData.cnpj.length !== 18)
-			errorsAux.push('O campo CNPJ deve ter 18 caracteres');
-
-		if (formData.email === '')
-			errorsAux.push('O campo e-mail é obrigatório');
-
-		if (formData.telefone === '')
-			errorsAux.push('O campo telefone é obrigatório');
-		else if (formData.telefone.length !== 15)
-			errorsAux.push('O campo telefone deve ter 15 caracteres');
-
-		setErrors(errorsAux);
-		return errorsAux.length === 0;
+		})
+		console.log(formData);
 	}
 
-	const handleSubmit = async (event: React.FormEvent<HTMLFormElement>): Promise<void> => {
-		event.preventDefault();
-		setLoading(true);
+	const validateData = (): boolean => {
+		let errorsAux: string[] = []
+		if (formData.nome === '') errorsAux.push('O campo nome é obrigatório')
 
-		let valid = validateData();
+		if (formData.cnpj === '') errorsAux.push('O campo CNPJ é obrigatório')
+		else if (formData.cnpj.length !== 18)
+			errorsAux.push('O campo CNPJ deve ter 18 caracteres')
+
+		if (formData.email === '')
+			errorsAux.push('O campo e-mail é obrigatório')
+
+		if (formData.telefone === '')
+			errorsAux.push('O campo telefone é obrigatório')
+		else if (formData.telefone.length !== 15)
+			errorsAux.push('O campo telefone deve ter 15 caracteres')
+
+		setErrors(errorsAux)
+		return errorsAux.length === 0
+	}
+
+	const handleSubmit = async (
+		event: React.FormEvent<HTMLFormElement>
+	): Promise<void> => {
+		event.preventDefault()
+		setLoading(true)
+
+		let valid = validateData()
 		if (!valid) {
-			setLoading(false);
-			return;
+			setLoading(false)
+			return
 		}
 
-		const formDataWithImage = new FormData();
-		formDataWithImage.set("id_empresa", formData.id_empresa?.toString() || '');
-		formDataWithImage.set("nome", formData.nome);
-		formDataWithImage.set("cnpj", formData.cnpj);
-		formDataWithImage.set("email", formData.email);
-		formDataWithImage.set("telefone", formData.telefone);
-		if (image) {
-			formDataWithImage.append("logo", image, image.name);
-		  }
-
-		const value: Token | null = await localforage.getItem('token');
+		const value: Token | null = await localforage.getItem('token')
 
 		if (!value || !value.access_token) {
-			window.location.href = '/login';
-			return;
+			window.location.href = '/login'
+			return
 		}
 
-		console.log(formDataWithImage);
-		if (formData.id_empresa === undefined) {
+		setFormData(formData);
 
-			await axios.post("http://localhost:8000/api/v1/empresas", formDataWithImage, {
-				headers: {
-					"Content-Type": "multipart/form-data",
-					"Accept": "application/json",
-					'Authorization': `Bearer ${value.access_token}`
-				}
-			}).then((response) => {
-				setLoading(false);
-				setSuccess(true);
-			}).catch((error) => {
-				setLoading(false);
-				const { message, errors } = error.response.data;
-				const erroList = [];
-				for (const campo in errors) {
-					if (errors.hasOwnProperty(campo)) {
-						erroList.push(errors[campo][0]);
-					}
-				}
-				setErrors(erroList);
-			});
-		} else {
-			await axios.patch("http://localhost:8000/api/v1/empresas/" + formData.id_empresa, formDataWithImage, {
-				headers: {
-					"Content-Type": "multipart/form-data",
-					"Accept": "application/json",
-					'Authorization': `Bearer ${value.access_token}`
-				}
-			}).then((response) => {
-				setLoading(false);
-				setSuccess(true);
-			}).catch((error) => {
-				setLoading(false);
-				const { message, errors } = error.response.data;
-				const erroList = [];
-				for (const campo in errors) {
-					if (errors.hasOwnProperty(campo)) {
-						erroList.push(errors[campo][0]);
-					}
-				}
-				setErrors(erroList);
-			});
+		if (image) {
+			formData.logo = image;
 		}
+
+		const apiUrl = formData.id_empresa
+			? `http://localhost:8000/api/v1/empresas/${formData.id_empresa}`
+			: 'http://localhost:8000/api/v1/empresas'
+
+		await axios({
+			method: formData.id_empresa ? 'patch' : 'post',
+			url: apiUrl,
+			data: formData,
+			headers: {
+				'Content-Type': 'multipart/form-data',
+				Accept: 'application/json',
+				Authorization: `Bearer ${value.access_token}`
+			}
+		})
+			.then(response => {
+				setLoading(false)
+				setSuccess(true)
+			})
+			.catch(error => {
+				setLoading(false)
+				const { message, errors } = error.response.data
+
+				if (errors === undefined) {
+					setErrors([message])
+					return
+				}
+				const erroList = []
+				for (const campo in errors) {
+					if (errors.hasOwnProperty(campo)) {
+						erroList.push(errors[campo][0])
+					}
+				}
+				setErrors(erroList)
+			})
 
 		setTimeout(() => {
-			setSuccess(false);
+			setSuccess(false)
 			setFormData({
 				nome: '',
 				cnpj: '',
 				email: '',
 				telefone: ''
-			});
+			})
 			if (onClose) {
-				onClose();
+				onClose()
 			}
-			handleClose();
-		}, 3000);
-	};
+			handleClose()
+		}, 3000)
+	}
 
-	const handleOpen = () => setOpen(true);
-	const handleClose = () => setOpen(false);
+	const handleOpen = () => {
+		setOpen(true)
+		if (props.data){
+			setFormData(props.data)
+		}
+	}
+
+	const handleClose = () => {
+		setOpen(false)
+		setErrors([])
+		setSuccess(false)
+		setLoading(false)
+		setFormData({
+			nome: '',
+			cnpj: '',
+			email: '',
+			telefone: ''
+		})
+	}
 
 	return (
 		<div>
-			<Button variant="outlined" onClick={handleOpen} startIcon={props.icon}>{props.button}</Button>
+			<Button
+				variant="outlined"
+				onClick={handleOpen}
+				startIcon={props.icon}
+			>
+				{props.button}
+			</Button>
 			<Modal
 				open={open}
 				onClose={handleClose}
@@ -253,23 +270,50 @@ const ModalCadastrar: React.FC<ModalCadastrarProps> = (props) => {
 				sx={{ overflow: 'scroll' }}
 			>
 				<Box sx={style}>
-					<Typography component="h1" variant="h4" sx={{ color: 'text.primary' }}>{props.button}</Typography>
-					<Box sx={{ display: success || loading || errors.length > 0 ? 'flex' : 'none', flexDirection: 'column' }}>
-						<StyledFade in={loading} sx={{ display: loading ? 'flex' : 'none' }}>
+					<Typography
+						component="h1"
+						variant="h4"
+						sx={{ color: 'text.primary' }}
+					>
+						{props.button}
+					</Typography>
+					<Box
+						sx={{
+							display:
+								success || loading || errors.length > 0
+									? 'flex'
+									: 'none',
+							flexDirection: 'column'
+						}}
+					>
+						<StyledFade
+							in={loading}
+							sx={{ display: loading ? 'flex' : 'none' }}
+						>
 							<CircularProgress />
-						</StyledFade >
-						<StyledFade in={success} sx={{ display: success ? 'flex' : 'none' }}>
+						</StyledFade>
+						<StyledFade
+							in={success}
+							sx={{ display: success ? 'flex' : 'none' }}
+						>
 							<Alert severity="success" sx={{ mb: 2 }}>
-								<AlertTitle>Empresa salva com sucesso!</AlertTitle>
+								<AlertTitle>
+									Empresa salva com sucesso!
+								</AlertTitle>
 							</Alert>
-						</StyledFade >
+						</StyledFade>
 						{errors.map(error => (
 							<Alert severity="error" sx={{ mb: 2 }} key={error}>
 								<AlertTitle>{error}</AlertTitle>
 							</Alert>
 						))}
 					</Box>
-					<Box component="form" noValidate onSubmit={handleSubmit} sx={{ mt: 3 }}>
+					<Box
+						component="form"
+						noValidate
+						onSubmit={handleSubmit}
+						sx={{ mt: 3 }}
+					>
 						<Grid container spacing={2}>
 							<Grid item xs={6}>
 								<TextField
@@ -293,7 +337,7 @@ const ModalCadastrar: React.FC<ModalCadastrarProps> = (props) => {
 									type="cnpj"
 									id="cnpj"
 									value={formData.cnpj}
-									onChange={(event) => handleChange(event, 18)}
+									onChange={event => handleChange(event, 18)}
 								/>
 							</Grid>
 							<Grid item xs={6}>
@@ -317,13 +361,20 @@ const ModalCadastrar: React.FC<ModalCadastrarProps> = (props) => {
 									type="telefone"
 									id="telefone"
 									value={formData.telefone}
-									onChange={(event) => handleChange(event, 15)}
+									onChange={event => handleChange(event, 15)}
 								/>
 							</Grid>
 							<Grid item xs={12}>
-								<Button component="label" variant="contained" startIcon={<CloudUploadIcon />}>
+								<Button
+									component="label"
+									variant="contained"
+									startIcon={<CloudUploadIcon />}
+								>
 									Upload Logo
-									<VisuallyHiddenInput type="file" onChange={handleImageChange} />
+									<VisuallyHiddenInput
+										type="file"
+										onChange={handleImageChange}
+									/>
 								</Button>
 							</Grid>
 						</Grid>
@@ -352,7 +403,7 @@ const ModalCadastrar: React.FC<ModalCadastrarProps> = (props) => {
 				</Box>
 			</Modal>
 		</div>
-	);
+	)
 }
 
-export default ModalCadastrar;
+export default ModalCadastrar

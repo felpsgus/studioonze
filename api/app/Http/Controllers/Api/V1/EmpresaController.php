@@ -78,7 +78,6 @@ class EmpresaController extends Controller {
 	 * Update the specified resource in storage.
 	 */
 	public function update(Request $request, $id) {
-		echo json_encode($request->all());
 		$request->validate([
 			'nome' => 'required|string',
 			'cnpj' => 'required|string',

@@ -2,8 +2,11 @@ import {
 	Alert,
 	AlertTitle,
 	Avatar,
-	Box, Button,
-	Container, Fade, Paper,
+	Box,
+	Button,
+	Container,
+	Fade,
+	Paper,
 	StyledEngineProvider,
 	Table,
 	TableBody,
@@ -12,103 +15,137 @@ import {
 	TableHead,
 	TableRow,
 	Typography,
-	styled,
-} from "@mui/material";
-import localforage from "localforage";
-import axios from "axios";
-import { useEffect, useState } from "react";
-import * as React from "react";
-import ModalCadastrar from "../ModalCadastrar";
-import CreateOutlinedIcon from '@mui/icons-material/CreateOutlined';
-import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
-import DeleteButton from "../DeleteButton";
+	styled
+} from '@mui/material'
+import localforage from 'localforage'
+import axios from 'axios'
+import { useEffect, useState } from 'react'
+import * as React from 'react'
+import ModalCadastrar from '../ModalCadastrar'
+import CreateOutlinedIcon from '@mui/icons-material/CreateOutlined'
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
+import DeleteButton from '../DeleteButton'
 
 interface CompanyData {
-	id_empresa: number;
-	nome: string;
-	cnpj: string;
-	email: string;
-	telefone: string;
-	logo: string;
+	id_empresa: number
+	nome: string
+	cnpj: string
+	email: string
+	telefone: string
+	logo: string
 }
 
 const StyledFade = styled(Fade)({
-	display: 'flex',
-});
+	display: 'flex'
+})
 
 export default function Dashboard() {
-
-	const [data, setData] = React.useState<CompanyData[]>([]);
-	const [success, setSuccess] = useState(false);
+	const [data, setData] = React.useState<CompanyData[]>([])
+	const [success, setSuccess] = useState(false)
 
 	const fetchData = React.useCallback(async () => {
 		try {
-			const value: { access_token: string } | null = await localforage.getItem('token');
+			const value: { access_token: string } | null =
+				await localforage.getItem('token')
 
 			if (!value || !value.access_token) {
-				window.location.href = '/login';
-				return;
+				window.location.href = '/login'
+				return
 			}
 
-			const response = await axios.get<{ data: CompanyData[] }>('http://localhost:8000/api/v1/empresas/', {
-				headers: {
-					Accept: 'application/json',
-					Authorization: `Bearer ${value.access_token}`,
-				},
-			});
+			const response = await axios.get<{ data: CompanyData[] }>(
+				'http://localhost:8000/api/v1/empresas/',
+				{
+					headers: {
+						Accept: 'application/json',
+						Authorization: `Bearer ${value.access_token}`
+					}
+				}
+			)
 
-			setData(response.data.data);
+			setData(response.data.data)
 		} catch (error) {
 			if (axios.isAxiosError(error) && error.response?.status === 401) {
-				window.location.href = '/login';
+				window.location.href = '/login'
 			} else {
-				console.error('Erro ao buscar empresas:', error);
+				console.error('Erro ao buscar empresas:', error)
 			}
 		}
-	}, [setData]);
+	}, [setData])
 
 	React.useEffect(() => {
-		fetchData();
-	}, [fetchData]);
+		fetchData()
+	}, [fetchData])
 
 	const handleUpdate = React.useCallback(() => {
-		fetchData();
-	}, [fetchData]);
+		fetchData()
+	}, [fetchData])
 
 	const handleDeletion = React.useCallback(() => {
-		setSuccess(true);
-		fetchData();
+		setSuccess(true)
+		fetchData()
 		setTimeout(() => {
-			setSuccess(false);
-		}, 3000);
-	}, [fetchData, setSuccess]);
+			setSuccess(false)
+		}, 3000)
+	}, [fetchData, setSuccess])
 
 	return (
 		<Container component="main" sx={{ bgcolor: 'background.default' }}>
 			<Box>
-				<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2 }}>
-					<Typography component="h1" variant="h4" sx={{ color: 'text.primary' }}>
+				<Box
+					sx={{
+						display: 'flex',
+						justifyContent: 'space-between',
+						alignItems: 'center',
+						mt: 2
+					}}
+				>
+					<Typography
+						component="h1"
+						variant="h4"
+						sx={{ color: 'text.primary' }}
+					>
 						Dashboard
 					</Typography>
-					<StyledFade in={success} sx={{ display: success ? 'flex' : 'none' }}>
+					<StyledFade
+						in={success}
+						sx={{ display: success ? 'flex' : 'none' }}
+					>
 						<Alert severity="success" sx={{ mb: 2 }}>
-							<AlertTitle>Empresa deletada com sucesso!</AlertTitle>
+							<AlertTitle>
+								Empresa deletada com sucesso!
+							</AlertTitle>
 						</Alert>
-					</StyledFade >
+					</StyledFade>
 					<Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-						<Button variant="outlined" onClick={handleUpdate}>Atualizar</Button>
-						<ModalCadastrar button="Cadastrar" onClose={handleUpdate} />
+						<Button variant="outlined" onClick={handleUpdate}>
+							Atualizar
+						</Button>
+						<ModalCadastrar
+							button="Cadastrar"
+							onClose={handleUpdate}
+						/>
 					</Box>
 				</Box>
 				<TableContainer component={Paper} sx={{ mt: 3 }}>
 					<Table stickyHeader>
 						<TableHead>
 							<TableRow>
-								<TableCell sx={{ fontWeight: 700 }}>Logo</TableCell>
-								<TableCell sx={{ fontWeight: 700 }}>Nome</TableCell>
-								<TableCell sx={{ fontWeight: 700 }}>CNPJ</TableCell>
-								<TableCell sx={{ fontWeight: 700 }}>Email</TableCell>
-								<TableCell sx={{ fontWeight: 700 }}>Telefone</TableCell>
+								<TableCell sx={{ fontWeight: 700 }}>
+									Logo
+								</TableCell>
+								<TableCell sx={{ fontWeight: 700 }}>
+									Nome
+								</TableCell>
+								<TableCell sx={{ fontWeight: 700 }}>
+									CNPJ
+								</TableCell>
+								<TableCell sx={{ fontWeight: 700 }}>
+									Email
+								</TableCell>
+								<TableCell sx={{ fontWeight: 700 }}>
+									Telefone
+								</TableCell>
 								<TableCell></TableCell>
 							</TableRow>
 						</TableHead>
@@ -122,10 +159,21 @@ export default function Dashboard() {
 									<TableCell>{row.cnpj}</TableCell>
 									<TableCell>{row.email}</TableCell>
 									<TableCell>{row.telefone}</TableCell>
-									<TableCell align="right" sx={{ width: 300 }}>
+									<TableCell
+										align="right"
+										sx={{ width: 300 }}
+									>
 										<Box sx={{ display: 'flex', gap: 2 }}>
-											<ModalCadastrar onClose={handleUpdate} data={row} button="Editar" icon={<CreateOutlinedIcon />} />
-											<DeleteButton row={row} func={handleDeletion} />
+											<ModalCadastrar
+												onClose={handleUpdate}
+												data={row}
+												button="Editar"
+												icon={<CreateOutlinedIcon />}
+											/>
+											<DeleteButton
+												row={row}
+												func={handleDeletion}
+											/>
 										</Box>
 									</TableCell>
 								</TableRow>
@@ -135,5 +183,5 @@ export default function Dashboard() {
 				</TableContainer>
 			</Box>
 		</Container>
-	);
+	)
 }
