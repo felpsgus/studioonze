@@ -18,7 +18,8 @@ class Empresa extends Model
         'nome',
         'cnpj',
         'email',
-        'telefone'
+        'telefone',
+		'logo'
     ];
 
 }

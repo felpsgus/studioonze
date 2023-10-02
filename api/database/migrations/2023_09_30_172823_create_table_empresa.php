@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('cnpj', 18);
             $table->string('email', 255);
             $table->string('telefone', 15);
+			$table->string('logo', 255)->nullable();
             $table->softDeletes();
             $table->timestamps();
         });

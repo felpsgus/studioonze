@@ -7,12 +7,13 @@ import {
 	Modal,
 	TextField,
 	Typography,
-	Alert, AlertTitle, experimentalStyled
+	Alert, AlertTitle, styled
 } from "@mui/material";
 import * as React from "react";
 import axios from "axios";
 import localforage from "localforage";
 import { useState } from "react";
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 
 const style = {
 	position: 'absolute',
@@ -28,6 +29,18 @@ const style = {
 	flexDirection: 'column',
 	alignItems: 'center',
 };
+
+const VisuallyHiddenInput = styled('input')({
+	clip: 'rect(0 0 0 0)',
+	clipPath: 'inset(50%)',
+	height: 1,
+	overflow: 'hidden',
+	position: 'absolute',
+	bottom: 0,
+	left: 0,
+	whiteSpace: 'nowrap',
+	width: 1,
+});
 
 interface FormData {
 	id_empresa?: number;
@@ -48,9 +61,8 @@ interface ModalCadastrarProps {
 	button?: string;
 }
 
-const StyledFade = experimentalStyled(Fade)({
+const StyledFade = styled(Fade)({
 	display: 'flex',
-	// Adicione outros estilos conforme necessário
 });
 
 
@@ -60,12 +72,21 @@ const ModalCadastrar: React.FC<ModalCadastrarProps> = (props) => {
 
 	const [loading, setLoading] = useState(false);
 	const [open, setOpen] = useState(false);
+
 	const [formData, setFormData] = useState<FormData>(data || {
+		id_empresa: undefined,
 		nome: '',
 		cnpj: '',
 		email: '',
-		telefone: '',
+		telefone: ''
 	});
+	const [image, setImage] = useState<File | null>(null);
+	const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+		if (event.target.files && event.target.files[0]) {
+			setImage(event.target.files[0]);
+		}
+	};
+
 	const [errors, setErrors] = useState<string[]>([]);
 	const [success, setSuccess] = useState(false);
 
@@ -110,8 +131,8 @@ const ModalCadastrar: React.FC<ModalCadastrarProps> = (props) => {
 
 	const validateData = (): boolean => {
 		let errorsAux: string[] = [];
-		if (formData.nome === '') { }
-		errorsAux.push('O campo nome é obrigatório');
+		if (formData.nome === '')
+			errorsAux.push('O campo nome é obrigatório');
 
 		if (formData.cnpj === '')
 			errorsAux.push('O campo CNPJ é obrigatório');
@@ -140,6 +161,16 @@ const ModalCadastrar: React.FC<ModalCadastrarProps> = (props) => {
 			return;
 		}
 
+		const formDataWithImage = new FormData();
+		formDataWithImage.set("id_empresa", formData.id_empresa?.toString() || '');
+		formDataWithImage.set("nome", formData.nome);
+		formDataWithImage.set("cnpj", formData.cnpj);
+		formDataWithImage.set("email", formData.email);
+		formDataWithImage.set("telefone", formData.telefone);
+		if (image) {
+			formDataWithImage.append("logo", image, image.name);
+		  }
+
 		const value: Token | null = await localforage.getItem('token');
 
 		if (!value || !value.access_token) {
@@ -147,9 +178,12 @@ const ModalCadastrar: React.FC<ModalCadastrarProps> = (props) => {
 			return;
 		}
 
+		console.log(formDataWithImage);
 		if (formData.id_empresa === undefined) {
-			await axios.post("http://localhost:8000/api/v1/empresas", formData, {
+
+			await axios.post("http://localhost:8000/api/v1/empresas", formDataWithImage, {
 				headers: {
+					"Content-Type": "multipart/form-data",
 					"Accept": "application/json",
 					'Authorization': `Bearer ${value.access_token}`
 				}
@@ -158,11 +192,19 @@ const ModalCadastrar: React.FC<ModalCadastrarProps> = (props) => {
 				setSuccess(true);
 			}).catch((error) => {
 				setLoading(false);
-				setErrors(error.response.data.errors);
+				const { message, errors } = error.response.data;
+				const erroList = [];
+				for (const campo in errors) {
+					if (errors.hasOwnProperty(campo)) {
+						erroList.push(errors[campo][0]);
+					}
+				}
+				setErrors(erroList);
 			});
 		} else {
-			await axios.patch("http://localhost:8000/api/v1/empresas/" + formData.id_empresa, formData, {
+			await axios.patch("http://localhost:8000/api/v1/empresas/" + formData.id_empresa, formDataWithImage, {
 				headers: {
+					"Content-Type": "multipart/form-data",
 					"Accept": "application/json",
 					'Authorization': `Bearer ${value.access_token}`
 				}
@@ -171,7 +213,14 @@ const ModalCadastrar: React.FC<ModalCadastrarProps> = (props) => {
 				setSuccess(true);
 			}).catch((error) => {
 				setLoading(false);
-				setErrors(error.response.data.errors);
+				const { message, errors } = error.response.data;
+				const erroList = [];
+				for (const campo in errors) {
+					if (errors.hasOwnProperty(campo)) {
+						erroList.push(errors[campo][0]);
+					}
+				}
+				setErrors(erroList);
 			});
 		}
 
@@ -206,10 +255,10 @@ const ModalCadastrar: React.FC<ModalCadastrarProps> = (props) => {
 				<Box sx={style}>
 					<Typography component="h1" variant="h4" sx={{ color: 'text.primary' }}>{props.button}</Typography>
 					<Box sx={{ display: success || loading || errors.length > 0 ? 'flex' : 'none', flexDirection: 'column' }}>
-						<StyledFade  in={loading} sx={{ display: loading ? 'flex' : 'none' }}>
+						<StyledFade in={loading} sx={{ display: loading ? 'flex' : 'none' }}>
 							<CircularProgress />
 						</StyledFade >
-						<StyledFade  in={success} sx={{ display: success ? 'flex' : 'none' }}>
+						<StyledFade in={success} sx={{ display: success ? 'flex' : 'none' }}>
 							<Alert severity="success" sx={{ mb: 2 }}>
 								<AlertTitle>Empresa salva com sucesso!</AlertTitle>
 							</Alert>
@@ -270,6 +319,12 @@ const ModalCadastrar: React.FC<ModalCadastrarProps> = (props) => {
 									value={formData.telefone}
 									onChange={(event) => handleChange(event, 15)}
 								/>
+							</Grid>
+							<Grid item xs={12}>
+								<Button component="label" variant="contained" startIcon={<CloudUploadIcon />}>
+									Upload Logo
+									<VisuallyHiddenInput type="file" onChange={handleImageChange} />
+								</Button>
 							</Grid>
 						</Grid>
 						<Box sx={{ display: 'flex', gap: 2 }}>

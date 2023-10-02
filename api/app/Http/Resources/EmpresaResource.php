@@ -20,6 +20,7 @@ class EmpresaResource extends JsonResource
             "cnpj" => $this->cnpj,
             "email" => $this->email,
             "telefone" => $this->telefone,
+			"logo" => $this->logo,
         );
     }
 }

@@ -1,4 +1,3 @@
-import './App.css';
 import { CssBaseline, ThemeProvider, createTheme } from '@mui/material';
 import {BrowserRouter, Route, Routes} from "react-router-dom";
 import Dashboard from './components/Dashboard';

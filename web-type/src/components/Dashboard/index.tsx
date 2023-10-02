@@ -1,13 +1,18 @@
 import {
+	Alert,
+	AlertTitle,
+	Avatar,
 	Box, Button,
-	Container, Paper,
+	Container, Fade, Paper,
+	StyledEngineProvider,
 	Table,
 	TableBody,
 	TableCell,
 	TableContainer,
 	TableHead,
 	TableRow,
-	Typography
+	Typography,
+	styled,
 } from "@mui/material";
 import localforage from "localforage";
 import axios from "axios";
@@ -24,12 +29,17 @@ interface CompanyData {
 	cnpj: string;
 	email: string;
 	telefone: string;
+	logo: string;
 }
+
+const StyledFade = styled(Fade)({
+	display: 'flex',
+});
 
 export default function Dashboard() {
 
-	const [token, setToken] = React.useState<string>('');
 	const [data, setData] = React.useState<CompanyData[]>([]);
+	const [success, setSuccess] = useState(false);
 
 	const fetchData = React.useCallback(async () => {
 		try {
@@ -39,8 +49,6 @@ export default function Dashboard() {
 				window.location.href = '/login';
 				return;
 			}
-
-			setToken(value.access_token);
 
 			const response = await axios.get<{ data: CompanyData[] }>('http://localhost:8000/api/v1/empresas/', {
 				headers: {
@@ -57,7 +65,7 @@ export default function Dashboard() {
 				console.error('Erro ao buscar empresas:', error);
 			}
 		}
-	}, [setData, setToken]);
+	}, [setData]);
 
 	React.useEffect(() => {
 		fetchData();
@@ -67,6 +75,14 @@ export default function Dashboard() {
 		fetchData();
 	}, [fetchData]);
 
+	const handleDeletion = React.useCallback(() => {
+		setSuccess(true);
+		fetchData();
+		setTimeout(() => {
+			setSuccess(false);
+		}, 3000);
+	}, [fetchData, setSuccess]);
+
 	return (
 		<Container component="main" sx={{ bgcolor: 'background.default' }}>
 			<Box>
@@ -74,6 +90,11 @@ export default function Dashboard() {
 					<Typography component="h1" variant="h4" sx={{ color: 'text.primary' }}>
 						Dashboard
 					</Typography>
+					<StyledFade in={success} sx={{ display: success ? 'flex' : 'none' }}>
+						<Alert severity="success" sx={{ mb: 2 }}>
+							<AlertTitle>Empresa deletada com sucesso!</AlertTitle>
+						</Alert>
+					</StyledFade >
 					<Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
 						<Button variant="outlined" onClick={handleUpdate}>Atualizar</Button>
 						<ModalCadastrar button="Cadastrar" onClose={handleUpdate} />
@@ -83,6 +104,7 @@ export default function Dashboard() {
 					<Table stickyHeader>
 						<TableHead>
 							<TableRow>
+								<TableCell sx={{ fontWeight: 700 }}>Logo</TableCell>
 								<TableCell sx={{ fontWeight: 700 }}>Nome</TableCell>
 								<TableCell sx={{ fontWeight: 700 }}>CNPJ</TableCell>
 								<TableCell sx={{ fontWeight: 700 }}>Email</TableCell>
@@ -93,14 +115,17 @@ export default function Dashboard() {
 						<TableBody>
 							{data.map(row => (
 								<TableRow key={row.id_empresa}>
+									<TableCell component="th" scope="row">
+										<Avatar alt={row.nome} src={row.logo} />
+									</TableCell>
 									<TableCell>{row.nome}</TableCell>
 									<TableCell>{row.cnpj}</TableCell>
 									<TableCell>{row.email}</TableCell>
 									<TableCell>{row.telefone}</TableCell>
-									<TableCell align="right">
+									<TableCell align="right" sx={{ width: 300 }}>
 										<Box sx={{ display: 'flex', gap: 2 }}>
-											<ModalCadastrar data={row} button="Editar" icon={<CreateOutlinedIcon />} />
-											<DeleteButton row={row} func={handleUpdate} />
+											<ModalCadastrar onClose={handleUpdate} data={row} button="Editar" icon={<CreateOutlinedIcon />} />
+											<DeleteButton row={row} func={handleDeletion} />
 										</Box>
 									</TableCell>
 								</TableRow>
