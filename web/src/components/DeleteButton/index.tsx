@@ -3,7 +3,6 @@ import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import { Button, ButtonProps } from "@mui/material";
 import * as React from "react";
 import localforage from "localforage";
-import { Token } from "@mui/icons-material";
 
 interface DeleteButtonProps extends ButtonProps {
   row: {
@@ -17,7 +16,7 @@ interface Token {
 }
 
 const DeleteButton: React.FC<DeleteButtonProps> = (props) => {
-  const { row, func, ...buttonProps } = props;
+  const { row, func } = props;
   const handleDeletion = async (id: number) => {
     const value: Token | null = await localforage.getItem("token");
 

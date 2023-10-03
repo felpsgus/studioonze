@@ -15,7 +15,7 @@ class EmpresaController extends Controller {
 	public function showAll() {
 		$empresas = Empresa::all();
 		$empresas->each(function ($empresa) {
-			$empresa->logo = asset('storage/empresas/logos/' . $empresa->logo);
+			$empresa->logo = $empresa->logo == null ? null : asset('storage/empresas/logos/' . $empresa->logo);
 		});
 		return EmpresaResource::collection($empresas);
 	}
@@ -77,28 +77,41 @@ class EmpresaController extends Controller {
 	/**
 	 * Update the specified resource in storage.
 	 */
-	public function update(Request $request, $id) {
-		$request->validate([
-			'nome' => 'required|string',
-			'cnpj' => 'required|string',
-			'email' => 'email',
-			'telefone' => 'string',
-			'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-		]);
+	public function update(SaveRequest $request, $id) {
 
-		$empresa = Empresa::findOrFail($id);
-
-		$fileName = null;
-		if ($request->hasFile('logo')) {
-			$fileName = time() . '.' . $request->file('logo')->getClientOriginalExtension();
-			$request->file('logo')->storeAs('public/logos', $fileName);
-			$empresa->logo = $fileName;
-		} else {
-			$fileName = null;
+		$empresa = Empresa::find($id);
+		if (!$empresa) {
+			return response()->json(['error' => 'Empresa não encontrada'], 404);
 		}
 
-		$empresa->update($empresa);
-		return new EmpresaResource($empresa);
+		if($request->has('nome'))
+			$empresa->nome = $request->input('nome');
+
+		if($request->has('cnpj'))
+			$empresa->cnpj = $request->input('cnpj');
+		
+		if($request->has('email'))
+			$empresa->email = $request->input('email');
+
+		if($request->has('telefone'))
+			$empresa->telefone = $request->input('telefone');
+
+		if ($request->hasFile('logo')) {
+			if (!$request->file('logo')->isValid()) {
+				return response()->json([
+					'message' => 'Arquivo inválido!'
+				], 401);
+			}
+
+			$fileName = time() . '.' . $request->file('logo')->getClientOriginalExtension();
+			$request->file('logo')->storeAs('public/empresas/logos', $fileName);
+			$empresa->logo = $fileName;
+		}
+
+		// Save the updated data
+		$empresa->save();
+
+		return response()->json($empresa);
 	}
 
 	/**

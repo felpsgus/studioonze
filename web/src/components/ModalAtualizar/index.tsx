@@ -44,7 +44,7 @@ const VisuallyHiddenInput = styled('input')({
 	width: 1
 })
 
-interface FormData {
+interface Data {
 	id_empresa?: number
 	nome: string
 	cnpj: string
@@ -57,9 +57,9 @@ interface Token {
 	access_token: string
 }
 
-interface ModalCadastrarProps {
+interface ModalAtualizarProps {
 	onClose?: () => void
-	data?: FormData
+	data?: Data
 	icon?: React.ReactNode
 	button?: string
 }
@@ -68,38 +68,31 @@ const StyledFade = styled(Fade)({
 	display: 'flex'
 })
 
-const ModalCadastrar: React.FC<ModalCadastrarProps> = props => {
+const ModalAtualizar: React.FC<ModalAtualizarProps> = props => {
 	const { onClose, data } = props
+
+	const TYPES: { [key: string]: string } = {
+		cnpj: '99.999.999/9999-99',
+		telefone: '(99) 99999-9999'
+	}
 
 	const [loading, setLoading] = useState(false)
 	const [open, setOpen] = useState(false)
+	const [errors, setErrors] = useState<string[]>([])
+	const [success, setSuccess] = useState(false)
 
-	const [formData, setFormData] = useState<FormData>(() => {
-		if (props.data) {
-			return props.data
-		} else {
-			return {
-				id_empresa: undefined,
-				nome: '',
-				cnpj: '',
-				email: '',
-				telefone: ''
-			}
-		}
+	const [formData, setFormData] = useState<Data>({
+		nome: '',
+		cnpj: '',
+		email: '',
+		telefone: '',
+		logo: undefined
 	})
 	const [image, setImage] = useState<File | null>(null)
 	const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
 		if (event.target.files && event.target.files[0]) {
 			setImage(event.target.files[0])
 		}
-	}
-
-	const [errors, setErrors] = useState<string[]>([])
-	const [success, setSuccess] = useState(false)
-
-	const TYPES: { [key: string]: string } = {
-		cnpj: '99.999.999/9999-99',
-		telefone: '(99) 99999-9999'
 	}
 
 	function applyMask(value: string, name: string) {
@@ -123,7 +116,7 @@ const ModalCadastrar: React.FC<ModalCadastrarProps> = props => {
 	}
 
 	const handleChange = (
-		event: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>,
+		event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
 		length: number | null = null
 	): void => {
 		if (length !== null && event.target.value.length > length) return
@@ -135,7 +128,6 @@ const ModalCadastrar: React.FC<ModalCadastrarProps> = props => {
 			...formData,
 			[name]: value
 		})
-		console.log(formData);
 	}
 
 	const validateData = (): boolean => {
@@ -162,6 +154,7 @@ const ModalCadastrar: React.FC<ModalCadastrarProps> = props => {
 		event: React.FormEvent<HTMLFormElement>
 	): Promise<void> => {
 		event.preventDefault()
+
 		setLoading(true)
 
 		let valid = validateData()
@@ -177,26 +170,21 @@ const ModalCadastrar: React.FC<ModalCadastrarProps> = props => {
 			return
 		}
 
-		setFormData(formData);
+		const formDataFinal = new FormData()
+		formDataFinal.append('nome', formData.nome)
+		formDataFinal.append('cnpj', formData.cnpj)
+		formDataFinal.append('email', formData.email)
+		formDataFinal.append('telefone', formData.telefone)
+		if (image) formDataFinal.append('logo', image)
 
-		if (image) {
-			formData.logo = image;
-		}
-
-		const apiUrl = formData.id_empresa
-			? `http://localhost:8000/api/v1/empresas/${formData.id_empresa}`
-			: 'http://localhost:8000/api/v1/empresas'
-
-		await axios({
-			method: formData.id_empresa ? 'patch' : 'post',
-			url: apiUrl,
-			data: formData,
-			headers: {
-				'Content-Type': 'multipart/form-data',
-				Accept: 'application/json',
-				Authorization: `Bearer ${value.access_token}`
-			}
-		})
+		await axios
+			.post(`http://localhost:8000/api/v1/empresas/${data?.id_empresa}`, formDataFinal, {
+				headers: {
+					'Content-Type': 'multipart/form-data',
+					Accept: 'application/json',
+					Authorization: `Bearer ${value.access_token}`
+				}
+			})
 			.then(response => {
 				setLoading(false)
 				setSuccess(true)
@@ -233,11 +221,10 @@ const ModalCadastrar: React.FC<ModalCadastrarProps> = props => {
 		}, 3000)
 	}
 
-	const handleOpen = () => {
+	const handleOpen = async () => {
 		setOpen(true)
-		if (props.data){
-			setFormData(props.data)
-		}
+		if (data)
+			setFormData(data as Data)
 	}
 
 	const handleClose = () => {
@@ -364,7 +351,10 @@ const ModalCadastrar: React.FC<ModalCadastrarProps> = props => {
 									onChange={event => handleChange(event, 15)}
 								/>
 							</Grid>
-							<Grid item xs={12}>
+							<Grid
+								item
+								xs={12}
+							>
 								<Button
 									component="label"
 									variant="contained"
@@ -373,6 +363,9 @@ const ModalCadastrar: React.FC<ModalCadastrarProps> = props => {
 									Upload Logo
 									<VisuallyHiddenInput
 										type="file"
+										accept="image/*"
+										name="logo"
+										id="logo"
 										onChange={handleImageChange}
 									/>
 								</Button>
@@ -380,7 +373,7 @@ const ModalCadastrar: React.FC<ModalCadastrarProps> = props => {
 						</Grid>
 						<Box sx={{ display: 'flex', gap: 2 }}>
 							<Button
-								type="submit"
+								type="button"
 								fullWidth
 								variant="outlined"
 								sx={{ mt: 3, mb: 2 }}
@@ -406,4 +399,4 @@ const ModalCadastrar: React.FC<ModalCadastrarProps> = props => {
 	)
 }
 
-export default ModalCadastrar
+export default ModalAtualizar

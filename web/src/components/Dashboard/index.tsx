@@ -7,7 +7,6 @@ import {
 	Container,
 	Fade,
 	Paper,
-	StyledEngineProvider,
 	Table,
 	TableBody,
 	TableCell,
@@ -19,12 +18,13 @@ import {
 } from '@mui/material'
 import localforage from 'localforage'
 import axios from 'axios'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import * as React from 'react'
 import ModalCadastrar from '../ModalCadastrar'
 import CreateOutlinedIcon from '@mui/icons-material/CreateOutlined'
-import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
 import DeleteButton from '../DeleteButton'
+import ModalAtualizar from '../ModalAtualizar'
+import Logout from '../Logout'
 
 interface CompanyData {
 	id_empresa: number
@@ -118,6 +118,7 @@ export default function Dashboard() {
 						</Alert>
 					</StyledFade>
 					<Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+						<Logout />
 						<Button variant="outlined" onClick={handleUpdate}>
 							Atualizar
 						</Button>
@@ -164,10 +165,10 @@ export default function Dashboard() {
 										sx={{ width: 300 }}
 									>
 										<Box sx={{ display: 'flex', gap: 2 }}>
-											<ModalCadastrar
+											<ModalAtualizar
 												onClose={handleUpdate}
-												data={row}
 												button="Editar"
+												data={row}
 												icon={<CreateOutlinedIcon />}
 											/>
 											<DeleteButton

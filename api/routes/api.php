@@ -3,6 +3,8 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\V1\UserController;
 use \App\Http\Controllers\Api\V1\EmpresaController;
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\Request;
 
 /*
 |--------------------------------------------------------------------------
@@ -40,7 +42,7 @@ Route::middleware('auth:api')->post(
     [EmpresaController::class, 'save']
 );
 
-Route::middleware('auth:api')->patch(
+Route::middleware('auth:api')->post(
     '/v1/empresas/{id}',
     [EmpresaController::class, 'update']
 );

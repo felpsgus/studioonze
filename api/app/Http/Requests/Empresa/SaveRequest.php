@@ -26,7 +26,8 @@ class SaveRequest extends FormRequest
             'nome' => 'required|string',
             'cnpj' => 'required|string',
             'email' => 'email',
-            'telefone' => 'string'
+            'telefone' => 'string',
+			'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ];
     }
 }
