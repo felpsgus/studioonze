@@ -75,6 +75,12 @@ Antes de começar, certifique-se de ter as seguintes ferramentas instaladas em s
         php artisan migrate
         ```
         
+    -   Configure o armazenamento local para as imagens
+        
+        ```bash
+        php artisan storage:link
+        ```
+        
 3.  **Configurando o Frontend (React)**
     
     -   Na raiz do projeto, acesse o diretório do projeto React:
